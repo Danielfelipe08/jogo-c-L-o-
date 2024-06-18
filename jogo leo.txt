@@ -1,0 +1,110 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+#define MAX_RODADAS 10
+#define PONTOS_POR_RODADA 100
+#define MAX_TENTATIVAS 6
+
+// codigo para escolher palavra aleatória 
+char* escolher_palavra() {
+    static char* palavras[] = {
+        "programacao", "computador", "teclado", "monitor", "mouse",
+        "jogos", "engenharia", "software", "hardware", "internet"
+    };
+    int indice = rand() % 10;
+    return palavras[indice];
+}
+
+// codigo para ver se foi adivinhada 
+int palavra_adivinhada(char* palavra, int* acertou) {
+    for (int i = 0; i < strlen(palavra); i++) {
+        if (!acertou[i]) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+// codigo para ver o estado atual da palavra, contabilizando o que ja acertou até o momento, se a letra for acertada mostra na palavra 
+void mostrar_palavra(char* palavra, int* acertou) {
+    for (int i = 0; i < strlen(palavra); i++) {
+        if (acertou[i]) {
+            printf("%c ", palavra[i]);
+        } else {
+            printf("_ ");
+        }
+    }
+    printf("\n");
+}
+
+// logica do jogo, looping para iniciar e terminar as rodadas 
+int main() {
+    char nome[50];
+    printf("Digite seu nome: ");
+    scanf("%s", nome);
+
+    srand(time(NULL));
+    int pontos = 0;
+    int rodadas = 0;
+
+    while (rodadas < MAX_RODADAS) {
+        char* palavra = escolher_palavra();
+        int tamanho_palavra = strlen(palavra);
+        int acertou[tamanho_palavra];
+        memset(acertou, 0, sizeof(acertou));
+        int tentativas_restantes = MAX_TENTATIVAS;
+        int rodada_ganha = 0;
+
+        printf("Rodada %d\n", rodadas + 1);
+
+        while (tentativas_restantes > 0) {
+            printf("Tentativas restantes: %d\n", tentativas_restantes);
+            mostrar_palavra(palavra, acertou);
+
+            char chute;
+            printf("Digite uma letra: ");
+            scanf(" %c", &chute);
+
+            int acertou_chute = 0;
+            for (int i = 0; i < tamanho_palavra; i++) {
+                if (palavra[i] == chute && !acertou[i]) {
+                    acertou[i] = 1;
+                    acertou_chute = 1;
+                }
+            }
+
+            if (!acertou_chute) {
+                tentativas_restantes--;
+            }
+
+            if (palavra_adivinhada(palavra, acertou)) {
+                rodada_ganha = 1;
+                break;
+            }
+        }
+
+        if (rodada_ganha) {
+            pontos += PONTOS_POR_RODADA;
+            printf("Parabéns! Você acertou a palavra.\n");
+        } else {
+            printf("Você perdeu! A palavra era: %s\n", palavra);
+            break;
+        }
+
+        rodadas++;
+    }
+
+    printf("Fim do jogo! Pontuação final de %s: %d pontos\n", nome, pontos);
+
+    FILE *arquivo = fopen("score.txt", "a");
+    if (arquivo == NULL) {
+        printf("Erro ao abrir o arquivo!\n");
+        return 1;
+    }
+    fprintf(arquivo, "Jogador: %s, Pontuação: %d\n", nome, pontos);
+    fclose(arquivo);
+
+    return 0;
+}
